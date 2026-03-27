@@ -9,8 +9,11 @@ require "misc"
 require "syscall"
 require "remotelualoader"
 require "jit"
+require "gpu"
+require "offsets"
+require "elf_loader"
 
-version_string = "Luac0re 2.1d by Gezine"
+version_string = "Luac0re 2.2 by Gezine"
 
 init_native_functions()
 patch_malloc()
@@ -29,6 +32,9 @@ if not status then
     show_dialog("JIT exploit failed\n" .. errmsg)
     return
 end
+
+-- For poops compatibility
+ulog = print
 
 nid_luafile = "/" .. get_nidpath() .. "/common_temp/nid.lua"
 auto_luafile = "/savedata0/lua/auto.lua"

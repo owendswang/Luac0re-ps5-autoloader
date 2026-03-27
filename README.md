@@ -13,6 +13,7 @@ Luac0re is a [mast1c0re](https://cturt.github.io/mast1c0re.html) variation that 
 
 - PS4 or PS5 console
 - Disc or digital version of *Star Wars Racer Revenge* USA (CUSA03474) or EU (CUSA03492) region  
+- Poopsploit payload requires 12.00 or lower firmware PS5  
 
 ## Usage
 
@@ -30,6 +31,8 @@ Luac0re is a [mast1c0re](https://cturt.github.io/mast1c0re.html) variation that 
 * **[ChampionLeake](https://github.com/ChampionLeake)** - PS2 *Star Wars Racer Revenge* exploit writeup on [psdevwiki](https://www.psdevwiki.com/ps2/Vulnerabilities)
 * **[shahrilnet](https://github.com/shahrilnet) & [null_ptr](https://github.com/n0llptr)** - Code references from [remote_lua_loader](https://github.com/shahrilnet/remote_lua_loader)
 * **[Dr.Yenyen](https://github.com/DrYenyen)** - Testing and validation
+* **[TheFlow](https://github.com/theofficialflow)** - Original netcontrol kernel exploit 
+* **[egycnq](https://github.com/egycnq)** - Porting netcontrol kernel exploit to Luac0re
 
 ## Disclaimer
 

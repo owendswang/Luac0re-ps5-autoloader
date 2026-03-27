@@ -34,4 +34,5 @@ if log_initialized_for ~= LOG_SERVER then
         local s = str .. "\n"
         syscall.sendto(log_sock, s, #s, 0, log_addr, 16)
     end
+    ulog = print
 end

@@ -1,4 +1,3 @@
-
 function printf(fmt, ...)
     print(string.format(fmt, ...))
 end
@@ -32,6 +31,7 @@ function file_read(filename, mode)
 end
 
 function send_notification(text)
+    print(text)
     local notify_buffer_size = 0xc30
     local notify_buffer = malloc(notify_buffer_size)
     local icon_uri = "cxml://psnotification/tex_icon_system"
@@ -236,7 +236,7 @@ function is_jailbroken()
         local sockaddr_in = malloc(16)
         local enable = malloc(4)
         
-        local sock_fd = syscall.socket(AF_INET, SOCK_STREAM, 0)
+        local sock_fd = create_socket(AF_INET, SOCK_STREAM, 0)
         if sock_fd == -1 then
             error("socket failed: " .. to_hex(sock_fd))
         end
@@ -357,3 +357,23 @@ function write_shellcode(dest, str)
     end
 end
 
+
+function get_title_id()
+    local sceKernelGetAppInfo = func_wrap(dlsym(LIBKERNEL_HANDLE, "sceKernelGetAppInfo"))
+    local pid = syscall.getpid()
+
+    local app_info = malloc(0x100)
+    local result = sceKernelGetAppInfo(pid, app_info)
+    if result ~= 0 then
+        error("sceKernelGetAppInfo error: " .. to_hex(result))
+    end
+
+    return read_null_terminated_string(app_info + 0x10)
+end
+
+
+function kill_app()
+    local pid = syscall.getpid()
+    local SIGKILL = 9
+    syscall.kill(pid, SIGKILL)
+end

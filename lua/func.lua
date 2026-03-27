@@ -63,8 +63,8 @@ function get_dlsym_offset()
 end
 
 function dlsym(handle, sym)
-    if SCE_KERNEL_DLSYM == 0 then
-        error("dlsym offset not available for firmware " .. (FW_VERSION or "unknown"))
+    if not sceKernelDlsym then
+        error("dlsym not inited")
     end
     
     if type(sym) ~= "string" then
@@ -83,6 +83,9 @@ end
 
 function init_dlsym()
     assert(FW_VERSION)
+    if type(sceKernelDlsym) == "function" then
+        return
+    end
     
     local major, minor = FW_VERSION:match("(%d+)%.(%d+)")
     major = tonumber(major)
