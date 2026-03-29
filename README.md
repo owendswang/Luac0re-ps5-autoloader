@@ -1,5 +1,8 @@
-# Luac0re
 
+
+# Luac0re PS5 autoloader
+
+Added autoloader for PS5 to Luac0re. Autoloader function is from [itsPLK/ps5_lua_autoloader](https://github.com/itsPLK/ps5_lua_autoloader)
 Luac0re is a [mast1c0re](https://cturt.github.io/mast1c0re.html) variation that uses Lua scripting for easier exploit development.
 
 ## Overview
@@ -24,8 +27,12 @@ Luac0re is a [mast1c0re](https://cturt.github.io/mast1c0re.html) variation that 
 5. Start the game and go to "OPTIONS -> HALL OF FAME"
 6. Enjoy
 
+## Setup Autoloader
+Go check this directory '[ps5_autoloader](https://github.com/owendswang/Luac0re-ps5-autoloader/tree/main/ps5_autoloader)'.
+
 ## Credits
 
+* **[Gezine](https://github.com/Gezine)** - [Luac0re](https://github.com/Gezine/Luac0re) writeup
 * **[CTurt](https://github.com/CTurt)** - [mast1c0re](https://cturt.github.io/mast1c0re.html) writeup
 * **[McCaulay](https://github.com/McCaulay)** - [mast1c0re](https://mccaulay.co.uk/mast1c0re-part-2-arbitrary-ps2-code-execution/) writeup and [Okage](https://github.com/McCaulay/mast1c0re) reference implementation
 * **[ChampionLeake](https://github.com/ChampionLeake)** - PS2 *Star Wars Racer Revenge* exploit writeup on [psdevwiki](https://www.psdevwiki.com/ps2/Vulnerabilities)
@@ -33,6 +40,7 @@ Luac0re is a [mast1c0re](https://cturt.github.io/mast1c0re.html) variation that 
 * **[Dr.Yenyen](https://github.com/DrYenyen)** - Testing and validation
 * **[TheFlow](https://github.com/theofficialflow)** - Original netcontrol kernel exploit 
 * **[egycnq](https://github.com/egycnq)** - Porting netcontrol kernel exploit to Luac0re
+* **[itsPLK](https://github.com/itsPLK/ps5_lua_autoloader)** - Autoloading function.
 
 ## Disclaimer
 

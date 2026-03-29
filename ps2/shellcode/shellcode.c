@@ -746,7 +746,7 @@ int mount_savedata_readonly() {
     u8 mount_params[128];
     u8 mount_result[128];
     
-    send_notification("Mounting savedata for Lua transition...");
+    // send_notification("Mounting savedata for Lua transition...");
     
     // Wait existing rw mount auto unmounts
     for (int attempt = 0; attempt < 20; attempt++) {
@@ -789,7 +789,7 @@ int mount_savedata_readonly() {
                         PS2_TO_NATIVE((u32)mount_result));
                                
         if (ret == 0) {
-            send_notification("Mounted savedata at /savedata0");
+            // send_notification("Mounted savedata at /savedata0");
             return 0;
         }
         
@@ -997,7 +997,7 @@ void initialize_lua() {
         return;
     }
     
-    send_notification("Executing... init.lua");
+    // send_notification("Executing... init.lua");
 
     u64 exec_status = call_rop(lua_pcall, 0,
                                lua_state,
