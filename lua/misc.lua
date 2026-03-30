@@ -371,9 +371,3 @@ function get_title_id()
     return read_null_terminated_string(app_info + 0x10)
 end
 
-
-function kill_app()
-    local pid = syscall.getpid()
-    local SIGKILL = 9
-    syscall.kill(pid, SIGKILL)
-end

@@ -145,14 +145,14 @@ local function build_rthdr(buf, target_size)
 end
 
 function poops_ps5()
-    send_notification("Luac0re poops 1.1 by egycnq")
+    send_notification("Luac0re poops 1.2 by egycnq")
 
     if not fw_offsets then
-        error("Update Luac0re to at least 2.2b version")
+        error("Update Luac0re to at least 2.2c version")
     end
     
-    if gpu.close then
-        error("Update Luac0re to at least 2.2b version")
+    if gpu.close or kill_app then
+        error("Update Luac0re to at least 2.2c version")
     end
 
     if PLATFORM ~= "PS5" then
@@ -1074,9 +1074,6 @@ function poops_ps5()
     kwrite64(proc_ucred + OFF.UCRED_CR_SCECAPS1,  0xFFFFFFFFFFFFFFFF)
 
     load_elfldr()
-    
-    send_notification("Closing app...")
-    kill_app()
 end
 
 poops_ps5()
