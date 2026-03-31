@@ -2,7 +2,8 @@
 
 # Luac0re PS5 autoloader
 
-Added autoloader for PS5 to Luac0re. Autoloader function is from [itsPLK/ps5_lua_autoloader](https://github.com/itsPLK/ps5_lua_autoloader)
+Added autoloader for PS5 to Luac0re. Autoloader function is from [itsPLK/ps5_lua_autoloader](https://github.com/itsPLK/ps5_lua_autoloader).
+
 Luac0re is a [mast1c0re](https://cturt.github.io/mast1c0re.html) variation that uses Lua scripting for easier exploit development.
 
 ## Overview
@@ -14,9 +15,9 @@ Luac0re is a [mast1c0re](https://cturt.github.io/mast1c0re.html) variation that 
 
 ## Requirements
 
-- PS4 or PS5 console
-- Disc or digital version of *Star Wars Racer Revenge* USA (CUSA03474) or EU (CUSA03492) region  
-- Poopsploit payload requires 12.00 or lower firmware PS5  
+- ~~PS4 or~~ PS5 console
+- Disc or digital version of *Star Wars Racer Revenge* USA (CUSA03474) or EU (CUSA03492) region
+- Poopsploit payload requires 12.00 or lower firmware PS5
 
 ## Usage
 

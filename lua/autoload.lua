@@ -80,11 +80,11 @@ end
 
 
 function main()
-    send_notification("Autoloader from itsPLK/ps5_lua_autoloader")
+    send_notification("Autoloader v0.2\nfrom itsPLK/ps5_lua_autoloader")
 
     if not is_jailbroken() then
         ulog("Not jailbroken\nSkipped autoloading payloads")
-        -- kill_app()
+        -- syscall.kill(syscall.getpid(), 9)
         return
     end
 
@@ -170,7 +170,7 @@ function main()
 
     send_notification("Loader finished!\nClosing game...")
     microsleep(1000)
-    kill_app()
+    syscall.kill(syscall.getpid(), 9)
 end
 
 main()

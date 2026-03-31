@@ -5,3 +5,13 @@ Put payloads in it. Then put this folder to `/mnt/USB?/` or `/data/`. Or impleme
 It's the script file to define payloads to run automatically by Autoloader. Edit this file according to the example in it.
 **'Kstuff-lite' has to be the last one on the list.** Otherwise it would cause power-off. Use at your own risk.
 (I think, it's the internal patching process of Kstuff wouldn't finish before ending the current running game. It would cause problem if any other payload was sent during this patching moment.)
+
+### Example
+```
+!1000
+ftpsrv-ps5-1.15-ng-beta9.elf
+!1000
+shadowmountplus-1.6test7-fix2.elf
+!1000
+kstuff-lite-1.1-dr-stable.elf
+```
