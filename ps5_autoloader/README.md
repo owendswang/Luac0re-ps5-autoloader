@@ -1,6 +1,6 @@
 ## 'ps5_autoloader' folder
 
-Put payloads in it. Then put this folder to `/mnt/USB?/` or `/data/`. Or implement it to the game savedata.
+Put payloads in it. Then put this folder to `/mnt/USB?/` or `/data/`. ~~Or implement it to the game savedata.~~ ('ps5_autoloader' can't be loaded from savedata since 'autoload.lua' is replaced with 'ps5_autoload.elf')
 
 ## 'autoload.txt' file
 
