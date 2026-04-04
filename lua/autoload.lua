@@ -72,7 +72,7 @@ end
 
 
 function main()
-    send_notification("Autoloader v0.3\nfrom itsPLK/ps5_lua_autoloader")
+    send_notification("Autoloader v0.3b\nfrom itsPLK/ps5_lua_autoloader")
 
     if not is_jailbroken() then
         ulog("Not jailbroken\nSkipped autoloading payloads")
