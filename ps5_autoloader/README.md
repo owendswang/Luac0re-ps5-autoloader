@@ -13,9 +13,9 @@ Kstuff does **NOT** have to be the last one on the list since v0.3.
 
 ### Example
 ```
-ftpsrv-ps5-1.15-ng-beta9.elf
-!1000
-kstuff-lite-1.1-dr-stable.elf
+ftpsrv-ps5-0.18.3.elf
 !1000
 shadowmountplus-1.6test7-fix2.elf
+!3000
+kstuff-lite-1.02.elf
 ```
