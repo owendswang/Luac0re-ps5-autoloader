@@ -42,6 +42,7 @@ Go check this directory '[ps5_autoloader](https://github.com/owendswang/Luac0re-
 * **[TheFlow](https://github.com/theofficialflow)** - Original netcontrol kernel exploit 
 * **[egycnq](https://github.com/egycnq)** - Porting netcontrol kernel exploit to Luac0re
 * **[itsPLK](https://github.com/itsPLK/ps5_lua_autoloader)** - Autoloading function.
+* **[kuba--](https://github.com/kuba--)** — [zip](https://github.com/kuba--/zip) used for ps5_autoload elf payload.
 
 ## Disclaimer
 

@@ -8,34 +8,42 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "zip.h"
+
+#define USB_MAX_COUNT 8
+#define AUTOLOADER_FOLDER "ps5_autoloader"
+#define AUTOLOAD_CONFIG "autoload.txt"
+#define ELFLDR_PORT 9021
+#define DATA_DIR "/data/ps5_autoloader"
+#define UPDATE_FILE "ps5_autoloader_update.zip"
 
 typedef struct {
     char useless1[45];
     char message[3075];
 } notify_request_t;
 
-int sceKernelSendNotificationRequest(int, notify_request_t *, size_t, int);
-
-static const char *k_autoload_dir = "ps5_autoloader";
-static const char *k_autoload_dir_alt = "ps5_lua_loader";
-static const char *k_autoload_config = "autoload.txt";
-static const int k_loader_port = 9021;
-static const char *k_savedata_title_ids[] = {
-    "CUSA03474_000",
-    "CUSA03492_000",
+struct extract_ctx {
+  FILE *fp;
 };
 
-static void notify(const char *msg) {
-    notify_request_t req;
+int sceKernelSendNotificationRequest(int, notify_request_t *, size_t, int);
 
-    memset(&req, 0, sizeof(req));
-    strncpy(req.message, msg, sizeof(req.message) - 1);
-    sceKernelSendNotificationRequest(0, &req, sizeof(req), 0);
+static void notify(const char *fmt, ...) {
+    notify_request_t req;
+    va_list args;
+
+    bzero(&req, sizeof req);
+    va_start(args, fmt);
+    vsnprintf(req.message, sizeof req.message, fmt, args);
+    va_end(args);
+
+    sceKernelSendNotificationRequest(0, &req, sizeof req, 0);
 }
 
 static bool file_exists(const char *path) {
@@ -125,28 +133,19 @@ static bool is_blocked_loader_name(const char *name) {
     return strcmp(name, "elfldr.elf") == 0 || strcmp(name, "elfldr.bin") == 0;
 }
 
-static bool is_blocked_exploit_lua(const char *name) {
-    return strcmp(name, "umtx.lua") == 0 ||
-           strcmp(name, "lapse.lua") == 0 ||
-           strcmp(name, "poops_ps5.lua") == 0;
-}
-
 static bool send_file_to_loader(const char *path, int port) {
     int sockfd;
     struct sockaddr_in addr;
     void *data;
     size_t size;
     size_t sent_total;
-    char msg[512];
 
     if (!read_file(path, &data, &size)) {
-        snprintf(msg, sizeof(msg), "[ERROR] Failed to read:\n%s", path);
-        notify(msg);
+        notify("[ERROR] Failed to read:\n%s", path);
         return false;
     }
 
-    snprintf(msg, sizeof(msg), "Loading ELF from:\n%s", path);
-    notify(msg);
+    notify("Loading ELF from:\n%s", path);
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -183,15 +182,14 @@ static bool send_file_to_loader(const char *path, int port) {
     close(sockfd);
     free(data);
 
-    snprintf(msg, sizeof(msg), "Sent %zu bytes to loader", sent_total);
-    notify(msg);
+    // notify("Sent %zu bytes to loader", sent_total);
     return true;
 }
 
 static bool check_candidate_dir(const char *dir, char *out_dir, size_t out_size) {
     char config_path[PATH_MAX];
 
-    if (snprintf(config_path, sizeof(config_path), "%s%s", dir, k_autoload_config) >= (int)sizeof(config_path)) {
+    if (snprintf(config_path, sizeof(config_path), "%s%s", dir, AUTOLOAD_CONFIG) >= (int)sizeof(config_path)) {
         return false;
     }
 
@@ -204,35 +202,12 @@ static bool check_candidate_dir(const char *dir, char *out_dir, size_t out_size)
     return true;
 }
 
-static bool find_savedata_config(char *out_dir, size_t out_size) {
-    char candidate[PATH_MAX];
-    size_t i;
-
-    for (i = 0; i < sizeof(k_savedata_title_ids) / sizeof(k_savedata_title_ids[0]); i++) {
-        if (snprintf(candidate, sizeof(candidate), "/mnt/sandbox/%s/savedata0/%s/", k_savedata_title_ids[i], k_autoload_dir) < (int)sizeof(candidate) &&
-            check_candidate_dir(candidate, out_dir, out_size)) {
-            return true;
-        }
-
-        if (snprintf(candidate, sizeof(candidate), "/mnt/sandbox/%s/savedata0/%s/", k_savedata_title_ids[i], k_autoload_dir_alt) < (int)sizeof(candidate) &&
-            check_candidate_dir(candidate, out_dir, out_size)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 static bool find_autoload_base(char *out_dir, size_t out_size) {
     char candidate[PATH_MAX];
-    int usb;
+    int i;
 
-    for (usb = 0; usb <= 7; usb++) {
-        if (snprintf(candidate, sizeof(candidate), "/mnt/usb%d/%s/", usb, k_autoload_dir) < (int)sizeof(candidate) &&
-            check_candidate_dir(candidate, out_dir, out_size)) {
-            return true;
-        }
-        if (snprintf(candidate, sizeof(candidate), "/mnt/usb%d/%s/", usb, k_autoload_dir_alt) < (int)sizeof(candidate) &&
+    for (i = 0; i < USB_MAX_COUNT; i++) {
+        if (snprintf(candidate, sizeof(candidate), "/mnt/usb%d/%s/", i, AUTOLOADER_FOLDER) < (int)sizeof(candidate) &&
             check_candidate_dir(candidate, out_dir, out_size)) {
             return true;
         }
@@ -241,20 +216,20 @@ static bool find_autoload_base(char *out_dir, size_t out_size) {
     if (check_candidate_dir("/data/ps5_autoloader/", out_dir, out_size)) {
         return true;
     }
-    if (check_candidate_dir("/data/ps5_lua_loader/", out_dir, out_size)) {
+
+    if (check_candidate_dir("/mnt/disc/ps5_autoloader/", out_dir, out_size)) {
         return true;
     }
 
-    return find_savedata_config(out_dir, out_size);
+    return false;
 }
 
 static int process_config(const char *base_dir) {
     char config_path[PATH_MAX];
     FILE *fp;
     char line[1024];
-    char msg[512];
 
-    if (snprintf(config_path, sizeof(config_path), "%s%s", base_dir, k_autoload_config) >= (int)sizeof(config_path)) {
+    if (snprintf(config_path, sizeof(config_path), "%s%s", base_dir, AUTOLOAD_CONFIG) >= (int)sizeof(config_path)) {
         notify("[ERROR] Config path too long");
         return 1;
     }
@@ -265,8 +240,7 @@ static int process_config(const char *base_dir) {
         return 1;
     }
 
-    snprintf(msg, sizeof(msg), "Loading config from:\n%s", config_path);
-    notify(msg);
+    notify("Loading config from:\n%s", config_path);
 
     while (fgets(line, sizeof(line), fp) != NULL) {
         char full_path[PATH_MAX];
@@ -282,8 +256,7 @@ static int process_config(const char *base_dir) {
             long sleep_ms = strtol(line + 1, &endptr, 10);
 
             if (endptr == line + 1 || *endptr != '\0' || sleep_ms < 0) {
-                snprintf(msg, sizeof(msg), "[ERROR] Invalid sleep time:\n%s", line + 1);
-                notify(msg);
+                notify("[ERROR] Invalid sleep time:\n%s", line + 1);
                 fclose(fp);
                 return 1;
             }
@@ -305,45 +278,87 @@ static int process_config(const char *base_dir) {
                 return 1;
             }
             if (!file_exists(full_path)) {
-                snprintf(msg, sizeof(msg), "[ERROR] File not found:\n%s", full_path);
-                notify(msg);
+                notify("[ERROR] File not found:\n%s", full_path);
                 continue;
             }
-            if (!send_file_to_loader(full_path, k_loader_port)) {
+            if (!send_file_to_loader(full_path, ELFLDR_PORT)) {
                 fclose(fp);
                 return 1;
             }
             continue;
         }
 
-        if (ends_with(line, ".lua")) {
-            if (is_blocked_exploit_lua(line)) {
-                snprintf(msg, sizeof(msg), "[ERROR] Remove kernel exploit from autoload.txt:\n%s", line);
-                notify(msg);
-                fclose(fp);
-                return 1;
-            }
-
-            snprintf(msg, sizeof(msg), "[ERROR] Lua execution unsupported in C payload:\n%s", line);
-            notify(msg);
-            continue;
-        }
-
-        snprintf(msg, sizeof(msg), "[ERROR] Unsupported file type:\n%s", line);
-        notify(msg);
+        notify("[ERROR] Unsupported file type:\n%s", line);
     }
 
     fclose(fp);
     return 0;
 }
 
-int main(void) {
-    char base_dir[PATH_MAX];
+static int path_exists(const char *path) {
+    struct stat st;
+    return stat(path, &st) == 0;
+}
 
+static int find_update_zip(char *out_path, size_t out_size) {
+    int i;
+    for (i = 0; i < USB_MAX_COUNT; i++) {
+        char path[PATH_MAX];
+        snprintf(path, sizeof(path), "/mnt/usb%d/%s", i, UPDATE_FILE);
+        if (path_exists(path)) {
+            snprintf(out_path, out_size, "%s", path);
+            // notify("Found Autoloader update file:\n%s", path);
+            return true;
+        }
+    }
+    return false;
+}
+
+static int ensure_dir(const char *path) {
+    struct stat st;
+
+    if (stat(path, &st) == 0) {
+        if (S_ISDIR(st.st_mode)) {
+            return 0;
+        }
+        notify("[ERROR] path exists but is not a directory: %s\n", path);
+        return -1;
+    }
+
+    if (mkdir(path, 0755) == 0) {
+        return 0;
+    }
+
+    if (errno == EEXIST) {
+        return 0;
+    }
+
+    notify("[ERROR] mkdir failed:\n%s", path);
+    return -1;
+}
+
+int main(void) {
     // notify("PS5 C autoloader starting");
 
+    char base_dir[PATH_MAX];
+    char update_zip_path[PATH_MAX];
+
+    if (find_update_zip(update_zip_path, sizeof(update_zip_path))) {
+        // notify("Updating 'ps5_autoloader' from %s", update_zip_path);
+        notify("Updating 'ps5_autoloader' from USB");
+        
+        if (ensure_dir(DATA_DIR) == 0) {
+            int ret = zip_extract(update_zip_path, DATA_DIR, NULL, NULL);
+            if (ret != 0) {
+                notify("[ERROR] Update extract failed:\n%s", zip_strerror(ret));
+            }
+        }
+
+        usleep((useconds_t)1000000U);
+    }
+
     if (!find_autoload_base(base_dir, sizeof(base_dir))) {
-        notify("autoload config not found");
+        notify("Autoload config not found");
         return 1;
     }
 
