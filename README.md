@@ -39,10 +39,12 @@ Go check this directory '[ps5_autoloader](https://github.com/owendswang/Luac0re-
 * **[ChampionLeake](https://github.com/ChampionLeake)** - PS2 *Star Wars Racer Revenge* exploit writeup on [psdevwiki](https://www.psdevwiki.com/ps2/Vulnerabilities)
 * **[shahrilnet](https://github.com/shahrilnet) & [null_ptr](https://github.com/n0llptr)** - Code references from [remote_lua_loader](https://github.com/shahrilnet/remote_lua_loader)
 * **[Dr.Yenyen](https://github.com/DrYenyen)** - Testing and validation
+* **[john-tornblom](https://github.com/john-tornblom)** — [elfldr](https://github.com/ps5-payload-dev/elfldr) and [ps5-payload-sdk](https://github.com/ps5-payload-dev/sdk/) used for compilation.  
 * **[TheFlow](https://github.com/theofficialflow)** - Original netcontrol kernel exploit 
 * **[egycnq](https://github.com/egycnq)** - Porting netcontrol kernel exploit to Luac0re
 * **[itsPLK](https://github.com/itsPLK/ps5_lua_autoloader)** - Autoloading function.
 * **[kuba--](https://github.com/kuba--)** — [zip](https://github.com/kuba--/zip) used for ps5_autoload elf payload.
+* **[cheburek3000](https://github.com/cheburek3000)** - Porting p2jb kernel exploit to Luac0re
 
 ## Disclaimer
 

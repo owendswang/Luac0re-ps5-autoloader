@@ -274,13 +274,13 @@ function load_elfldr()
     local ok, err = pcall(function()
         local fw = tonumber(FW_VERSION)
 
-        if fw > 12.00 then
+        if fw > 13.20 then
             error("Unsupported firmware " .. FW_VERSION)
         end
 
         local elf
         if fw > 10.01 then
-            elf = "elfldr_1200.elf"
+            elf = "elfldr_1320.elf"
         else
             elf = "elfldr_1001.elf"
         end

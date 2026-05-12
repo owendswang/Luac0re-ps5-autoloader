@@ -9,6 +9,9 @@ if PLATFORM == "PS5" then
   if tonumber(FW_VERSION) >= 4.00 and tonumber(FW_VERSION) <= 12.00 then
     run_lua_file("/savedata0/lua/poops_ps5.lua")
     run_lua_file("/mnt/sandbox/" .. get_title_id() .. "_000/savedata0/lua/autoload.lua")
+  elseif tonumber(FW_VERSION) > 12.00 and tonumber(FW_VERSION) <= 12.70 then
+    run_lua_file("/savedata0/lua/p2jb.lua")
+    run_lua_file("/mnt/sandbox/" .. get_title_id() .. "_000/savedata0/lua/autoload.lua")
   else
     error("Not supported firmware: " .. tostring(FW_VERSION))
   end
