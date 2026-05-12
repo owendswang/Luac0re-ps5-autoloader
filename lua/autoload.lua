@@ -72,7 +72,7 @@ end
 
 
 function main()
-    send_notification("Autoloader 0.4\nbased on itsPLK's work")
+    send_notification("Autoloader 0.5\nbased on itsPLK's work")
 
     if not is_jailbroken() then
         ulog("Not jailbroken\nSkipped autoloading payloads")
