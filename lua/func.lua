@@ -135,7 +135,7 @@ function init_dlsym()
         end
     elseif PLATFORM == "PS5" then
         -- PS5: For firmware > 10.01, calculate offset dynamically
-        -- Was tested until 12.xx
+        -- Was tested until 13.20
         if major > 10 or major == 10 then
             SCE_KERNEL_DLSYM = read64(LIBC_OFFSETS.sceKernelGetModuleInfoFromAddr) - 0x450
         else
@@ -182,6 +182,8 @@ function init_native_functions()
     sceMsgDialogTerminate                 = func_wrap(read64(EBOOT_OFFSETS.sceMsgDialogTerminate))
     sceKernelGetModuleInfoFromAddr        = func_wrap(read64(LIBC_OFFSETS.sceKernelGetModuleInfoFromAddr))
     sceKernelRemoveExceptionHandler       = func_wrap(read64(EBOOT_OFFSETS.sceKernelRemoveExceptionHandler))
+    scePthreadCreate                      = func_wrap(read64(EBOOT_OFFSETS.scePthreadCreate))
+    scePthreadJoin                        = func_wrap(read64(EBOOT_OFFSETS.scePthreadJoin))
     scePthreadSelf                        = func_wrap(read64(EBOOT_OFFSETS.scePthreadSelf))
     scePthreadCancel                      = func_wrap(read64(EBOOT_OFFSETS.scePthreadSelf) + 0x10)
     sceKernelJitCreateSharedMemory        = func_wrap(read64(EBOOT_OFFSETS.sceKernelJitCreateSharedMemory))

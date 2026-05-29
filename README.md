@@ -45,6 +45,7 @@ Go check this directory '[ps5_autoloader](https://github.com/owendswang/Luac0re-
 * **[itsPLK](https://github.com/itsPLK/ps5_lua_autoloader)** - Autoloading function.
 * **[kuba--](https://github.com/kuba--)** — [zip](https://github.com/kuba--/zip) used for ps5_autoload elf payload.
 * **[cheburek3000](https://github.com/cheburek3000)** - Porting p2jb kernel exploit to Luac0re
+* **[ufm42](https://github.com/ufm42)** - [kexp](https://github.com/ufm42/kexp) used for PS5 post JB all-in-one shellcode
 
 ## Disclaimer
 

@@ -50,13 +50,18 @@ SIGBUS = 10
 SIGSEGV = 11
 SA_SIGINFO = 0x4
 
+PROT_READ  = 0x1
+PROT_WRITE = 0x2
+PROT_EXEC  = 0x4
+PROT_RWX   = PROT_READ | PROT_WRITE | PROT_EXEC
+
 LIBKERNEL_HANDLE = 0x2001
 
 LIBKERNEL_BASE = 0
 
 PLATFORM = nil
 FW_VERSION = nil
-
+TITLE_ID = nil
     
 THREAD_HANDLE_RUNTIME_BRIDGE = EBOOT_BASE + 0x3A1A38
 THREAD_HANDLE_IOP_SPU2       = EBOOT_BASE + 0x5BF9738
@@ -109,6 +114,8 @@ EBOOT_OFFSETS = {
     sceMsgDialogOpen                      = EBOOT_BASE + 0x389158,
     sceMsgDialogTerminate                 = EBOOT_BASE + 0x389418,
     sceKernelRemoveExceptionHandler       = EBOOT_BASE + 0x389570,
+    scePthreadCreate                      = EBOOT_BASE + 0x389660,
+    scePthreadJoin                        = EBOOT_BASE + 0x3895E0,
     scePthreadSelf                        = EBOOT_BASE + 0x3895C8,
     sceKernelJitCreateSharedMemory        = EBOOT_BASE + 0x389528,
     sceKernelJitCreateAliasOfSharedMemory = EBOOT_BASE + 0x389530,
@@ -116,6 +123,7 @@ EBOOT_OFFSETS = {
     recv_fd                               = EBOOT_BASE + 0x728A0,
     memcpy                                = EBOOT_BASE + 0x3894C8,
     memset                                = EBOOT_BASE + 0x3894D0,
+    
 }    
 
 LIBC_OFFSETS = {

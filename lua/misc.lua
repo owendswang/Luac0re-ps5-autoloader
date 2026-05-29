@@ -357,15 +357,71 @@ function write_shellcode(dest, str)
     end
 end
 
+function write_shellcode_network(dest)
+    local maxsize = 0x400000
+    local sockaddr_in = malloc(16)
+    local enable = malloc(4)
+
+    local function htons(port)
+        return ((port << 8) | (port >> 8)) & 0xFFFF
+    end
+
+    local sock_fd = create_socket(AF_INET, SOCK_STREAM, 0)
+    if sock_fd < 0 then error("create_socket error") end
+
+    write32(enable, 1)
+    syscall.setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, enable, 4)
+
+    write8(sockaddr_in + 1, AF_INET)
+    write16(sockaddr_in + 2, htons(9027))
+    write32(sockaddr_in + 4, INADDR_ANY)
+
+    syscall.bind(sock_fd, sockaddr_in, 16)
+    syscall.listen(sock_fd, 1)
+
+    local client_fd = syscall.accept(sock_fd, sockaddr_in, enable)
+    if client_fd < 0 then
+        syscall.close(sock_fd)
+        error("accept() error")
+    end
+
+    local total_read = 0
+    while total_read < maxsize do
+        local n = syscall.read(client_fd, SHELLCODE_SCRATCH + total_read, maxsize - total_read)
+        if n == 0 then break end
+        if n < 0 then
+            syscall.close(client_fd)
+            syscall.close(sock_fd)
+            error("read() error")
+        end
+        total_read = total_read + n
+    end
+
+    syscall.close(client_fd)
+    syscall.close(sock_fd)
+
+    if total_read == 0 then error("no data received") end
+
+    jit_memcpy(dest, SHELLCODE_SCRATCH, total_read)
+end
+
 
 function get_title_id()
-    local sceKernelGetAppInfo = func_wrap(dlsym(LIBKERNEL_HANDLE, "sceKernelGetAppInfo"))
     local pid = syscall.getpid()
+    
+    local mib = malloc(0x10)
+    write32(mib + 0x0, 1)
+    write32(mib + 0x4, 14)
+    write32(mib + 0x8, 35)
+    write32(mib + 0xC, pid)
 
     local app_info = malloc(0x100)
-    local result = sceKernelGetAppInfo(pid, app_info)
+    local oldlen = malloc(0x8)
+    write64(oldlen, 0x58)
+
+    local result = syscall.sysctl(mib, 4, app_info, oldlen, 0, 0)
     if result ~= 0 then
-        error("sceKernelGetAppInfo error: " .. to_hex(result))
+        error("sysctl error: " .. get_error_string())
     end
 
     return read_null_terminated_string(app_info + 0x10)

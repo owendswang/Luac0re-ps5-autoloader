@@ -45,8 +45,8 @@ function remote_lua_loader(port)
         return
     end
 
-    show_dialog(string.format("%s\nRemote Lua Loader\nPlatform: %s\nFW: %s\nListening: %s",
-        version_string, PLATFORM, FW_VERSION, network_str))
+    show_dialog(string.format("%s\nRemote Lua Loader\nPlatform: %s\nFW: %s\nTitle ID: %s\nListening: %s",
+            version_string, PLATFORM, FW_VERSION, TITLE_ID, network_str))
 
     while true do
         write32(addrlen, 16)

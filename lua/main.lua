@@ -9,11 +9,8 @@ require "misc"
 require "syscall"
 require "remotelualoader"
 require "jit"
-require "gpu"
-require "offsets"
-require "elf_loader"
 
-version_string = "Luac0re 2.2d by Gezine"
+version_string = "Luac0re 2.3 by Gezine"
 
 init_native_functions()
 patch_malloc()
@@ -25,16 +22,15 @@ scePthreadCancel(read64(THREAD_HANDLE_GS))
 
 sceKernelRemoveExceptionHandler(11)
 FW_VERSION = get_fwversion()
-send_notification(version_string .. "\nPLATFORM : " ..  PLATFORM .. "\nFW : " .. FW_VERSION)
+TITLE_ID = get_title_id()
+send_notification(string.format("%s\nPlatform: %s\nFW: %s\nTitle ID: %s",
+                version_string, PLATFORM, FW_VERSION, TITLE_ID))
 
 local status, errmsg = jit_init()
 if not status then
     show_dialog("JIT exploit failed\n" .. errmsg)
     return
 end
-
--- For poops compatibility
-ulog = print
 
 nid_luafile = "/" .. get_nidpath() .. "/common_temp/nid.lua"
 auto_luafile = "/savedata0/lua/auto.lua"
