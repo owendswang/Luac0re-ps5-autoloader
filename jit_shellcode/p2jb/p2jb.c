@@ -1435,7 +1435,7 @@ static s32 aio_prepare(exploit_ctx_t *ctx, const char *title_id, aio_ctx_t *aio)
 
     LOG(ctx, "aio: finding elfldr\n");
     char elfldr_path[512];
-    if (!find_file(ctx, title_id, "elfldr-ps5-0.23.elf", elfldr_path)) {
+    if (!find_file(ctx, title_id, "elfldr_quieter.elf", elfldr_path)) {
         LOG(ctx, "aio: elfldr not found\n");
         return 0;
     }
@@ -1453,7 +1453,7 @@ static s32 aio_prepare(exploit_ctx_t *ctx, const char *title_id, aio_ctx_t *aio)
         char *p = bin_path; while (*s) *p++ = *s++; *p = '\0';
         LOG(ctx, "aio: using usb kexp_debug.bin\n");
     } else {
-        if (!find_file(ctx, title_id, "kexp_2026_05_25.bin", bin_path)) {
+        if (!find_file(ctx, title_id, "kexp_quieter.bin", bin_path)) {
             LOG(ctx, "aio: kexp bin not found\n");
             CALL(ctx, fn_free, (u64)aio->elfldr_data, 0, 0, 0, 0, 0);
             aio->elfldr_data = 0;

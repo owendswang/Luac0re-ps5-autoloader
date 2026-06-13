@@ -1,23 +1,24 @@
 ## 'ps5_autoloader' folder
 
-Put payloads in it. Then put this folder to `/mnt/USB?/` or `/data/`. Or implement it into BD disc root path. It could read `/mnt/disc/ps5_autoloader` too.
+Put payloads in it. Then put this folder to `/mnt/usb?/` or `/data/`. Or implement it into BD disc root path. It could read `/mnt/disc/ps5_autoloader` too.
 
 ### Priority
 
-`/mnt/USB?/ps5_autoloader` -> `/data/ps5_autoloader` -> `/mnt/disc/ps5_autoloader`
+`/mnt/usb?/ps5_autoloader` -> `/data/ps5_autoloader` -> `/mnt/disc/ps5_autoloader`
 
 ## 'autoload.txt' file
 
-It's the script file to define payloads to run automatically by Autoloader. Edit this file according to the example in it.
+It's the script file to define payloads to run automatically by Autoloader. Edit this file according to the example below.  
+Make sure you add more delay more than 1 second at the beginning to make sure your payloads would run after the game closed. I suggest to add 5 seconds delay at the beginning.
 
 ### Example
 ```
 !5000
-ftpsrv-ps5-0.19.elf
+ftpsrv-ps5-0.20.elf
 !1000
-shadowmountplus-1.6beta9.elf
+shadowmountplus-1.6test15-fix2.elf
 !3000
-kstuff-lite-1.04.elf
+kstuff-lite-1.07beta.elf
 ```
 
 ## 'ps5_autoloader_update.zip' file

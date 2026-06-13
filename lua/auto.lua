@@ -1,4 +1,14 @@
 run_lua_file("/savedata0/lua/setlogserver.lua")
+
+function run_autoload_if_exists()
+  local autoload_path = "/mnt/sandbox/" .. get_title_id() .. "_000/savedata0/lua/autoload.lua"
+  if file_exists(autoload_path) then
+    run_lua_file(autoload_path)
+  else
+    remote_lua_loader(9026)
+  end
+end
+
 if PLATFORM == "PS5" then
 --[[  if tonumber(FW_VERSION) <= 7.61 then
     run_lua_file("/savedata0/lua/umtx.lua")
@@ -7,11 +17,11 @@ if PLATFORM == "PS5" then
   elseif tonumber(FW_VERSION) <= 12.00 then
     run_lua_file("/savedata0/lua/poops.lua") ]]--
   if tonumber(FW_VERSION) >= 4.00 and tonumber(FW_VERSION) <= 12.00 then
-    run_lua_file("/savedata0/lua/poops_ps5.lua")
-    run_lua_file("/mnt/sandbox/" .. get_title_id() .. "_000/savedata0/lua/autoload.lua")
+    run_lua_file("/savedata0/lua/poops.lua")
+    run_autoload_if_exists()
   elseif tonumber(FW_VERSION) > 12.00 and tonumber(FW_VERSION) <= 12.70 then
     run_lua_file("/savedata0/lua/p2jb.lua")
-    run_lua_file("/mnt/sandbox/" .. get_title_id() .. "_000/savedata0/lua/autoload.lua")
+    run_autoload_if_exists()
   else
     error("Not supported firmware: " .. tostring(FW_VERSION))
   end

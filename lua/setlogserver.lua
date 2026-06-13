@@ -1,4 +1,4 @@
-LOG_SERVER = "192.168.2.12"
+LOG_SERVER = "192.168.2.26"
 
 if log_initialized_for ~= LOG_SERVER then
     log_initialized_for = LOG_SERVER
