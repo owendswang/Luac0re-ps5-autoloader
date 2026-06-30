@@ -409,21 +409,28 @@ end
 function get_title_id()
     local pid = syscall.getpid()
     
+    if PLATFORM ~= "PS4" and PLATFORM ~= "PS5" then
+        error("Unknown PLATFORM: " .. tostring(PLATFORM))
+    end
+
+    local app_info_size
+    if PLATFORM == "PS4" then
+        app_info_size = 0x48
+    elseif PLATFORM == "PS5" then
+        app_info_size = 0x58
+    end
+
     local mib = malloc(0x10)
     write32(mib + 0x0, 1)
     write32(mib + 0x4, 14)
     write32(mib + 0x8, 35)
     write32(mib + 0xC, pid)
-
     local app_info = malloc(0x100)
     local oldlen = malloc(0x8)
-    write64(oldlen, 0x58)
-
+    write64(oldlen, app_info_size)
     local result = syscall.sysctl(mib, 4, app_info, oldlen, 0, 0)
     if result ~= 0 then
         error("sysctl error: " .. get_error_string())
     end
-
     return read_null_terminated_string(app_info + 0x10)
 end
-
